@@ -48,7 +48,7 @@ int main(){
 {
 printf("This is thread %d\n", omp_get_thread_num());
 }
-    long n = 98306>>2;
+    long n = 98306;
 
 //    int n=20;
     float a = 0.05;
@@ -79,23 +79,23 @@ printf("This is thread %d\n", omp_get_thread_num());
         }
     }
     float a4=clock();
-    float t2= (a4 - a3) / (float)CLOCKS_PER_SEC;
-    float i1=clock();
+    float t2= (a4 - a3)/(float)CLOCKS_PER_SEC;
+    double i1=omp_get_wtime();
     initialize(x,n);
-    float i2=clock();
-    float t3= (i2 - i1) / (float)CLOCKS_PER_SEC;
-    float s1=clock();
+    double i2=omp_get_wtime();
+    double t3= (i2 - i1) ;
+    double s1=omp_get_wtime();
     smooth(x,y,n,a,b,c);
-    float s2=clock();
-    float t4= (s2 - s1) / (float)CLOCKS_PER_SEC;
-    float c1=clock();
+    double s2=omp_get_wtime();
+    double t4= (s2 - s1) ;
+    double c1=omp_get_wtime();
     count(x,n,t,&ctx);
-    float c2=clock();
-    float t5= (c2 - c1) / (float)CLOCKS_PER_SEC;
-    float c3=clock();
+    double c2=omp_get_wtime();
+    double t5= (c2 - c1);
+    double c3=omp_get_wtime();
     count(y,n,t,&cty);
-    float c4=clock();
-    float t6= (c4 - c3) / (float)CLOCKS_PER_SEC;
+    double c4=omp_get_wtime();
+    double t6= (c4 - c3);
 
 
     printf("Summary:\n");
