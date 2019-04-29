@@ -1,0 +1,17 @@
+#!/bin/tcsh
+
+if( -e ppi_weak ) then     #if this file exist
+
+   echo " ppi_weak with 2k_intervals"
+   foreach i ( 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16) 
+        ibrun -n $i ./ppi < 2k_intervals
+   end
+
+
+   echo " ppi_weak with 2m_intervals"
+
+   foreach i ( 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16) 
+        ibrun -n $i ./ppi < 2m_intervals
+   end
+endif
+

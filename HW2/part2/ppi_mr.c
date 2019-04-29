@@ -22,8 +22,6 @@ int main(int argc, char *argv[])
   MPI_Comm_rank(MPI_COMM_WORLD, &myid);
     if (myid ==0) scanf("%d",&n);
     MPI_Bcast(&n,1,MPI_INT, 0, MPI_COMM_WORLD);
-    //if (n==0) break;
-    //else {
         h    = 1.0e0/n;           /* Calculate the interval size */
         sum  = 0.0e0;
   
@@ -47,7 +45,7 @@ int main(int argc, char *argv[])
             }
         }
         
-        t1_red = mysecond()-t1_int;
+        t1_red = mysecond()-t0_red;
         MPI_Reduce (&t1_int, &avg_int, 1, MPI_DOUBLE, MPI_SUM, 0 , MPI_COMM_WORLD);
         MPI_Reduce (&t1_int, &max_int, 1, MPI_DOUBLE, MPI_MAX, 0 , MPI_COMM_WORLD);
         MPI_Reduce (&t1_int, &min_int, 1, MPI_DOUBLE, MPI_MIN, 0 , MPI_COMM_WORLD);
@@ -60,7 +58,6 @@ int main(int argc, char *argv[])
             printf(" avg integreation: %13.9f(sec) max integration %13.9f(sec) min integration %13.9f(sec)\n", avg_int/numprocs, max_int,min_int );
             printf(" avg reduction: %13.9f(sec) max reduction %13.9f(sec) min reduction %13.9f(sec)\n", avg_red/numprocs, max_red,min_red );
     }
- // }
   MPI_Finalize();
   return(0);
 }
