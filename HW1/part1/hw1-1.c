@@ -15,7 +15,7 @@ void smooth(float **x,float **y,int n,float a,float b,float c){
     int i;
 #pragma omp parallel 
 {
-#pragma omp for schedule(dynamic,100000)
+#pragma omp for schedule(static)
     for (i= 1; i<n-1; i++){
         int j;
         //printf("This is thread %d, i=%d\n", omp_get_thread_num(), i);
