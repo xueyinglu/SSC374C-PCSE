@@ -28,8 +28,8 @@ void count(float **y,int n,float t,int *ct){
 }
 
 int main(){
-   // int n = 98306;
-    int n=10;
+    unsigned long int n = 98306;
+   // int n=10;
     float a = 0.05;
     float b = 0.1;
     float c = 0.4;
