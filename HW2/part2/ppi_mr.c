@@ -35,7 +35,7 @@ int main(int argc, char *argv[])
         t0_red = mysecond();
         //MPI_Reduce (&mypi, &pi, 1, MPI_DOUBLE, MPI_SUM, 0 , MPI_COMM_WORLD);
         if (myid != 0) {
-            MPI_Ssend(&mypi,1, MPI_DOUBLE_PRECISION, 0, MTAG2, MPI_COMM_WORLD);
+            MPI_Send(&mypi,1, MPI_DOUBLE_PRECISION, 0, MTAG2, MPI_COMM_WORLD);
         }
         else {
             pi =mypi;
