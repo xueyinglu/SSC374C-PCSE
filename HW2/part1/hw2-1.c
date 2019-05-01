@@ -1,15 +1,31 @@
 #include <stdlib.h>
+#include <sys/time.h>
 #include <time.h>
 #include <stdio.h>
 #include <math.h>
 #include <mpi.h>
-void initialize(float **x,int n){
+
+double mysecond()
+{
+   struct timeval tp;
+   struct timezone tzp;
+   int i;
+   i = gettimeofday(&tp,&tzp);
+   return ( (double) tp.tv_sec + (double) tp.tv_usec * 1.e-6 );
+}
+
+void initialize(float **x,int n, int myid, int numprocs){
+    double t0=mysecond();
     srand(time(NULL));
     for (int i= 0; i<n; i++)
     for (int j= 0; j<n; j++){
         x[i][j]=(float)rand()/(float)RAND_MAX;
         //printf("x[i][j]= %f\n",x[i][j]);
     }
+    double t1=mysecond()-t0;
+    double avg_t;
+    MPI_Reduce(&t1, &avg_t, 1, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
+    if (myid==0) printf("average initialization time (sec): %13.9f\n",avg_t/numprocs);
 }
 
 void smooth(float **x,float **y,int n,float a,float b,float c, int myid, int dim, int numprocs){
@@ -18,6 +34,7 @@ void smooth(float **x,float **y,int n,float a,float b,float c, int myid, int dim
     MPI_Type_vector(n,1,n,MPI_FLOAT,&column);
     MPI_Type_commit(&column);
 
+    double t0=mysecond();
     /* send and receive row vectors*/
     if (myid<numprocs-dim){
     // send the bottom row to the adjacent processor at the bottom
@@ -62,17 +79,33 @@ void smooth(float **x,float **y,int n,float a,float b,float c, int myid, int dim
                         + c* x[i+0][j+0];
         }
 }
+    double t1=mysecond()-t0;
+    double avg_t;
+    MPI_Reduce(&t1, &avg_t, 1, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
+    if (myid==0) printf("average smooth time (sec): %13.9f\n",avg_t/numprocs);
 }
 
-void count(float **y,int n,float t,int *ct){
-int localct=*ct;
-int i,j;
-    for (i= 1; i<n-1; i++){
-    for (j= 0; j<n-1; j++){
-        if (y[i][j]<t) {localct+=1;}
+void count(float **y,int n,float t,int myid, int numprocs){
+    double t0=mysecond();
+    int localct=0;
+    long globalct;
+    int i,j;
+        for (i= 1; i<n-1; i++){
+        for (j= 1; j<n-1; j++){
+            if (y[i][j]<t) {localct+=1;}
+        }
     }
-}
-*ct=localct;
+    MPI_Reduce(&localct,&globalct,1,MPI_LONG, MPI_SUM, 0, MPI_COMM_WORLD);
+    double t1=mysecond()-t0;
+    double avg_t;
+    MPI_Reduce(&t1, &avg_t, 1, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
+    if (myid==0) {
+        printf("average count time (sec): %13.9f\n",avg_t/numprocs);
+        printf("number of elements below threashold: %d\n",globalct);
+        long total_num = (n-2)*(n-2)*numprocs;
+        printf("Fraction of elements below threshold: %f\n",(double) globalct/(double) total_num);
+    }
+
 }
 
 int main( int argc, char*argv[]){
@@ -91,7 +124,6 @@ int main( int argc, char*argv[]){
     float t= 0.1;
     int ctx = 0;
     int cty = 0;
-    float a1=clock();
     float **x = malloc(sizeof *x * n);
     if (x)
     {
@@ -100,10 +132,6 @@ int main( int argc, char*argv[]){
             x[i] = malloc(sizeof *x[i] * n);
         }
     }
-    float a2=clock();
-    float t1= (a2 - a1) / (float)CLOCKS_PER_SEC;
-
-    float a3=clock();
     float **y = malloc(sizeof *y * n);
     if (y)
     {
@@ -112,13 +140,19 @@ int main( int argc, char*argv[]){
             y[i] = malloc(sizeof *y[i] * n);
         }
     }
-    float a4=clock();
-    float t2= (a4 - a3)/(float)CLOCKS_PER_SEC;
-    initialize(x,n);
+    initialize(x,n,myid, numprocs);
     smooth(x,y,n,a,b,c,myid,dim,numprocs);
-    count(x,n,t,&ctx);
-    count(y,n,t,&cty);
-
+    if (myid==0){
+        printf("Threshold: %f\n", t);
+        printf("Smoothing constants (a, b, c): %f %f %f \n",a,b,c);
+        printf("Count X \n");
+    }
+    count(x,n,t,myid,numprocs);
+    if (myid==0){
+        printf("Count Y\n");
+    }
+    count(y,n,t,myid,numprocs);
+    MPI_Finalize();
 /*
     printf("Summary:\n");
     printf("Number of elements in a row/column: %d\n",n);
